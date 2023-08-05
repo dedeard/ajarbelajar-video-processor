@@ -18,6 +18,9 @@
   },
   "dependencies": {
     "dotenv": "^16.3.1",
+    "minio": "^7.1.1",
+    "php-serialize": "^4.1.1",
+    "redis": "^4.6.7",
     "winston": "^3.10.0"
   }
 }
