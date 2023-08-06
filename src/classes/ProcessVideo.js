@@ -54,7 +54,6 @@ class ProcessVideo extends EventEmitter {
    * @returns None
    */
   async process() {
-    await this.createOutputDirectory()
     await this.fetchVideoResolution()
     await this.fetchVideoDurations()
     await this.calculateEligibleRenditions()
@@ -62,15 +61,6 @@ class ProcessVideo extends EventEmitter {
     await this.renderVideoWithProgress()
     await this.generateMasterFile()
     this.emit('end')
-  }
-
-  /**
-   * Creates the output directory specified by the `dest` property.
-   * If the directory already exists, it will not throw an error.
-   * @returns {Promise<void>} A promise that resolves when the directory is created.
-   */
-  async createOutputDirectory() {
-    await fs.promises.mkdir(this.dest, { recursive: true })
   }
 
   /**
