@@ -2,6 +2,15 @@ const Serialize = require('php-serialize')
 const EventEmitter = require('events')
 const { Redis } = require('ioredis')
 
+/**
+ * Represents a NodeLaravel instance that extends the EventEmitter class.
+ * @class
+ * @extends EventEmitter
+ * @param {Object} options - The options for creating a new NodeLaravel instance.
+ * @param {Redis} [options.client=new Redis()] - The Redis client to use.
+ * @param {string} options.scope - The scope of the NodeLaravel instance.
+ * @param {string} options.queue - The queue of the NodeLaravel instance.
+ */
 class NodeLaravel extends EventEmitter {
   constructor({ client = new Redis(), scope, queue }) {
     super()
@@ -10,7 +19,14 @@ class NodeLaravel extends EventEmitter {
     this.queue = queue
   }
 
-  pushJob(name, object) {
+  /**
+   * Pushes a job to the queue with the given name and object.
+   * @param {string} name - The name of the job.
+   * @param {object} object - The object to be serialized and pushed to the queue.
+   * @returns {Promise} A promise that resolves with the reply from the Redis client.
+   * @throws {Error} If there is an error pushing the job to the queue.
+   */
+  push(name, object) {
     const command = Serialize.serialize(object, this.scope)
     const data = {
       job: 'Illuminate\\Queue\\CallQueuedHandler@call',
@@ -22,19 +38,6 @@ class NodeLaravel extends EventEmitter {
       attempts: 1,
     }
 
-    return this.pushToQueue(data)
-  }
-
-  pushEvent(name, object) {
-    const eventData = Serialize.serialize(object, this.scope)
-    const event = {
-      event: name,
-      data: eventData,
-    }
-    return this.pushToQueue(event)
-  }
-
-  pushToQueue(data) {
     return new Promise((resolve, reject) => {
       this.client.rpush(this.queue, JSON.stringify(data), (err, reply) => {
         if (err) {
@@ -46,6 +49,10 @@ class NodeLaravel extends EventEmitter {
     })
   }
 
+  /**
+   * Starts listening for messages on a Redis queue and executes the corresponding commands.
+   * @returns None
+   */
   listen() {
     const listenLoop = async () => {
       try {
