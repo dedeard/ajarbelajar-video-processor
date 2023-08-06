@@ -61,7 +61,6 @@ class NodeLaravel extends EventEmitter {
         const reply = await this.client.blpop(this.queue, 0)
         if (reply && reply.length === 2) {
           const obj = JSON.parse(reply[1])
-          console.log(obj)
           const command = obj.data.command
           try {
             const raw = Serialize.unserialize(command, this.scope)
