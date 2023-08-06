@@ -1,6 +1,7 @@
 const Serialize = require('php-serialize')
 const EventEmitter = require('events')
 const { Redis } = require('ioredis')
+const { randomUUID } = require('crypto')
 
 /**
  * Represents a NodeLaravel instance that extends the EventEmitter class.
@@ -29,13 +30,14 @@ class NodeLaravel extends EventEmitter {
   push(name, object) {
     const command = Serialize.serialize(object, this.scope)
     const data = {
+      uuid: randomUUID(),
       job: 'Illuminate\\Queue\\CallQueuedHandler@call',
       data: {
         commandName: name,
         command,
       },
       id: Date.now(),
-      attempts: 1,
+      attempts: 0,
     }
 
     return new Promise((resolve, reject) => {
@@ -59,6 +61,7 @@ class NodeLaravel extends EventEmitter {
         const reply = await this.client.blpop(this.queue, 0)
         if (reply && reply.length === 2) {
           const obj = JSON.parse(reply[1])
+          console.log(obj)
           const command = obj.data.command
           try {
             const raw = Serialize.unserialize(command, this.scope)
