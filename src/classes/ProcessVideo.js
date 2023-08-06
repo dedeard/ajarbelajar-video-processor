@@ -3,6 +3,17 @@ const path = require('path')
 const EventEmitter = require('events')
 const { exec, spawn } = require('child_process')
 
+/**
+ * A class for processing videos with various configurations.
+ * @class ProcessVideo
+ * @extends EventEmitter
+ * @param {Object} options - The options for processing the video.
+ * @param {string} options.src - The source file path of the video.
+ * @param {string} options.dest - The destination file path for the processed video.
+ * @param {number} [options.segment=5] - The duration of each video segment in seconds.
+ * @param {number} [options.aspectRatio=16/9] - The aspect ratio of the processed video.
+ * @param {Array} [options.renditions] - An array of rendition objects specifying the height, bitrate, and audiorate for each rendition.
+ */
 class ProcessVideo extends EventEmitter {
   constructor({
     src,
@@ -30,6 +41,18 @@ class ProcessVideo extends EventEmitter {
     this.commandArguments = []
   }
 
+  /**
+   * Processes the video by performing a series of asynchronous tasks in a specific order.
+   * - Creates the output directory.
+   * - Fetches the video resolution.
+   * - Fetches the video durations.
+   * - Calculates the eligible renditions.
+   * - Builds the command arguments.
+   * - Renders the video with progress.
+   * - Generates the master file.
+   * - Emits the 'end' event.
+   * @returns None
+   */
   async process() {
     await this.createOutputDirectory()
     await this.fetchVideoResolution()
@@ -41,10 +64,19 @@ class ProcessVideo extends EventEmitter {
     this.emit('end')
   }
 
+  /**
+   * Creates the output directory specified by the `dest` property.
+   * If the directory already exists, it will not throw an error.
+   * @returns {Promise<void>} A promise that resolves when the directory is created.
+   */
   async createOutputDirectory() {
     await fs.promises.mkdir(this.dest, { recursive: true })
   }
 
+  /**
+   * Fetches the resolution of a video by executing a command using ffprobe.
+   * @returns None
+   */
   async fetchVideoResolution() {
     const result = await this.executeCommand(
       `ffprobe -v error -select_streams v:0 -show_entries stream=width,height -of csv=s=x:p=0 ${this.src}`,
@@ -53,6 +85,11 @@ class ProcessVideo extends EventEmitter {
     this.resolution = { width: parseInt(width), height: parseInt(height) }
   }
 
+  /**
+   * Fetches the durations of a video using the ffprobe command.
+   * @returns None
+   * @throws {Error} If there is an error executing the ffprobe command.
+   */
   async fetchVideoDurations() {
     const result = await this.executeCommand(
       `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${this.src}`,
@@ -60,6 +97,10 @@ class ProcessVideo extends EventEmitter {
     this.durations = Number(result)
   }
 
+  /**
+   * Calculates the eligible renditions based on the resolution and aspect ratio.
+   * @returns None
+   */
   async calculateEligibleRenditions() {
     for (const rendition of this.renditions) {
       const { height } = rendition
@@ -71,6 +112,10 @@ class ProcessVideo extends EventEmitter {
     }
   }
 
+  /**
+   * Generates a master playlist file for the eligible renditions.
+   * @returns {Promise<void>} - A promise that resolves when the master playlist file is generated.
+   */
   async generateMasterFile() {
     let masterPlaylist = `#EXTM3U\n#EXT-X-VERSION:3\n`
     for (const rendition of this.eligibleRenditions) {
@@ -80,6 +125,10 @@ class ProcessVideo extends EventEmitter {
     await fs.promises.writeFile(path.join(this.dest, 'playlist.m3u8'), masterPlaylist)
   }
 
+  /**
+   * Builds the command arguments for a video conversion process.
+   * @returns None
+   */
   async buildCommandArguments() {
     const staticParams = [
       '-c:a',
@@ -128,6 +177,11 @@ class ProcessVideo extends EventEmitter {
 
     this.commandArguments = [...miscParams, '-i', this.src, ...this.commandArguments]
   }
+
+  /**
+   * Renders a video with progress using the FFmpeg library.
+   * @returns {Promise} A promise that resolves when the video rendering is complete or rejects if there is an error.
+   */
   async renderVideoWithProgress() {
     return new Promise((resolve, reject) => {
       const childProcess = spawn('ffmpeg', this.commandArguments)
@@ -177,6 +231,11 @@ class ProcessVideo extends EventEmitter {
     })
   }
 
+  /**
+   * Executes a command and returns a promise that resolves with the stdout or rejects with an error.
+   * @param {string} command - The command to execute.
+   * @returns {Promise<string>} A promise that resolves with the stdout of the command or rejects with an error.
+   */
   executeCommand(command) {
     return new Promise((resolve, reject) => {
       exec(command, (error, stdout, stderr) => {
