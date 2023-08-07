@@ -36,7 +36,7 @@ class EpisodeProcessJob {
     // Push the EpisodeUpdatedJob to indicate the episode is processing
     await updateEpisodeJob.push(
       'App\\Jobs\\EpisodeUpdatedJob',
-      new EpisodeUpdatedJob(this.episode.id, { status: 'processing' }),
+      new EpisodeUpdatedJob(this.episode.id, { m3u8_processing_status: 'processing' }),
     )
 
     try {
@@ -71,7 +71,7 @@ class EpisodeProcessJob {
       // Push the EpisodeUpdatedJob to indicate the episode processing is successful
       await updateEpisodeJob.push(
         'App\\Jobs\\EpisodeUpdatedJob',
-        new EpisodeUpdatedJob(this.episode.id, { status: 'success', seconds: video.durations }),
+        new EpisodeUpdatedJob(this.episode.id, { m3u8_processing_status: 'success', seconds: video.durations }),
       )
     } catch (e) {
       // Catch and log any errors that occur during processing
@@ -80,7 +80,7 @@ class EpisodeProcessJob {
       // Push the EpisodeUpdatedJob to indicate the episode processing failed
       await updateEpisodeJob.push(
         'App\\Jobs\\EpisodeUpdatedJob',
-        new EpisodeUpdatedJob(this.episode.id, { status: 'failed' }),
+        new EpisodeUpdatedJob(this.episode.id, { m3u8_processing_status: 'failed' }),
       )
     }
   }
