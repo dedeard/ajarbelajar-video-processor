@@ -110,7 +110,10 @@ class ProcessVideo extends EventEmitter {
     let masterPlaylist = `#EXTM3U\n#EXT-X-VERSION:3\n`
     for (const rendition of this.eligibleRenditions) {
       const { height, bitrate } = rendition
-      masterPlaylist += `#EXT-X-STREAM-INF:BANDWIDTH=${bitrate * 1000},RESOLUTION=${height}\n${height}p.m3u8\n`
+      const width = Math.round(height * this.aspectRatio)
+      masterPlaylist += `#EXT-X-STREAM-INF:BANDWIDTH=${
+        bitrate * 1000
+      },RESOLUTION=${width}x${height},NAME="${height}p"\n${height}p.m3u8\n`
     }
     await fs.promises.writeFile(path.join(this.dest, 'playlist.m3u8'), masterPlaylist)
   }
