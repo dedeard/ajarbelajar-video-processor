@@ -10,10 +10,8 @@ const config = {
   logging: process.env.LOGGING === 'true',
 
   redis: {
-    socket: {
-      host: String(process.env.REDIS_HOST || 'localhost'),
-      port: Number(process.env.REDIS_PORT || 6379),
-    },
+    host: String(process.env.REDIS_HOST || 'localhost'),
+    port: Number(process.env.REDIS_PORT || 6379),
     username: String(process.env.REDIS_USER || 'default'),
     password: String(process.env.REDIS_PASS || 'null'),
   },
